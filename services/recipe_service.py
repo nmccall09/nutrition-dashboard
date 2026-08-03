@@ -87,8 +87,7 @@ def get_all_recipes() -> pd.DataFrame:
             r.carbs_per_serving,
             r.fat_per_serving,
             r.prep_minutes,
-            r.estimated_cost_per_serving
-                AS manual_cost_per_serving,
+            r.estimated_cost_per_serving,
             r.instructions,
             r.notes,
             r.created_at,
@@ -123,8 +122,7 @@ def get_recipe_by_id(
             r.carbs_per_serving,
             r.fat_per_serving,
             r.prep_minutes,
-            r.estimated_cost_per_serving
-                AS manual_cost_per_serving,
+            r.estimated_cost_per_serving,
             r.instructions,
             r.notes,
             r.created_at,

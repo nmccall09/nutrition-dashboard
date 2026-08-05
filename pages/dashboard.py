@@ -10,53 +10,81 @@ from services.meal_log_service import (
 )
 from services.settings_service import get_setting
 
-
 def create_complete_date_range(
     daily_data: pd.DataFrame,
-    start_date: date,
-    end_date: date,
+    start_date,
+    end_date,
 ) -> pd.DataFrame:
-    """
-    Include zero-value rows for days without meal logs.
-    """
     complete_dates = pd.DataFrame(
         {
             "meal_date": pd.date_range(
-                start=start_date,
-                end=end_date,
+                start=pd.Timestamp(start_date),
+                end=pd.Timestamp(end_date),
                 freq="D",
             )
         }
     )
 
-    if daily_data.empty:
-        complete_dates["calories"] = 0.0
-        complete_dates["protein"] = 0.0
-        complete_dates["carbs"] = 0.0
-        complete_dates["fat"] = 0.0
-        complete_dates["estimated_cost"] = 0.0
-        complete_dates["meals_logged"] = 0
+    daily_data = daily_data.copy()
 
-        return complete_dates
+    if daily_data.empty:
+        result = complete_dates.copy()
+
+        for column in (
+            "calories",
+            "protein",
+            "carbs",
+            "fat",
+            "estimated_cost",
+        ):
+            result[column] = 0.0
+
+        return result
+
+    # Force both merge keys to the exact same dtype.
+    complete_dates["meal_date"] = (
+        pd.to_datetime(
+            complete_dates["meal_date"],
+            errors="coerce",
+        )
+        .dt.normalize()
+        .astype("datetime64[ns]")
+    )
+
+    daily_data["meal_date"] = (
+        pd.to_datetime(
+            daily_data["meal_date"],
+            errors="coerce",
+        )
+        .dt.normalize()
+        .astype("datetime64[ns]")
+    )
+
+    # Remove any rows whose dates could not be converted.
+    daily_data = daily_data.dropna(
+        subset=["meal_date"]
+    )
 
     result = complete_dates.merge(
         daily_data,
-        how="left",
         on="meal_date",
+        how="left",
     )
 
-    numeric_columns = [
+    numeric_columns = (
         "calories",
         "protein",
         "carbs",
         "fat",
         "estimated_cost",
-        "meals_logged",
-    ]
-
-    result[numeric_columns] = (
-        result[numeric_columns].fillna(0)
     )
+
+    for column in numeric_columns:
+        if column in result.columns:
+            result[column] = pd.to_numeric(
+                result[column],
+                errors="coerce",
+            ).fillna(0.0)
 
     return result
 

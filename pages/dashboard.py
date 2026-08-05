@@ -77,6 +77,7 @@ def create_complete_date_range(
         "carbs",
         "fat",
         "estimated_cost",
+        "meals_logged",
     )
 
     for column in numeric_columns:
@@ -111,7 +112,16 @@ def render_today_metrics(
         calories = float(today_row["calories"])
         protein = float(today_row["protein"])
         cost = float(today_row["estimated_cost"])
-        meals = int(today_row["meals_logged"])
+        meals_value = pd.to_numeric(
+            today_row.get("meals_logged", 0),
+            errors="coerce",
+        )
+
+        meals = (
+            0
+            if pd.isna(meals_value)
+            else int(meals_value)
+        )
 
     metric_columns = st.columns(4)
 
